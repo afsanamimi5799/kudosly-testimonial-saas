@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Billing\Contracts\StripeGateway;
+use App\Billing\StripeGateway as StripeGatewayImplementation;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -12,7 +14,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // The billing services talk to Stripe through the contract, so the
+        // binding can be swapped for a fake while the billing features are
+        // exercised without reaching Stripe.
+        $this->app->bind(StripeGateway::class, StripeGatewayImplementation::class);
     }
 
     /**

@@ -202,6 +202,15 @@ Route::middleware('auth')->group(function () {
     Route::get('billing', BillingController::class)
         ->name('billing.index');
 
+    Route::post('billing/checkout', [BillingController::class, 'checkout'])
+        ->name('billing.checkout');
+
+    Route::get('billing/checkout/success', [BillingController::class, 'checkoutSuccess'])
+        ->name('billing.checkout.success');
+
+    Route::get('billing/checkout/cancelled', [BillingController::class, 'checkoutCancelled'])
+        ->name('billing.checkout.cancelled');
+
     Route::get('profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
 
