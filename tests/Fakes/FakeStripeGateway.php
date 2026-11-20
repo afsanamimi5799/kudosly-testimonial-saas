@@ -49,6 +49,23 @@ class FakeStripeGateway implements StripeGateway
      */
     public ?User $user = null;
 
+    /**
+     * The number of customer portal sessions that were opened.
+     */
+    public int $portalCount = 0;
+
+    /**
+     * The options of the last customer portal session.
+     *
+     * @var array<string, mixed>
+     */
+    public array $portalOptions = [];
+
+    /**
+     * The address the fake portal session points at.
+     */
+    public string $portalUrl = 'https://billing.stripe.com/p/session/test';
+
     public function isConfigured(): bool
     {
         return $this->configured;
@@ -77,7 +94,11 @@ class FakeStripeGateway implements StripeGateway
 
     public function customerPortal(User $user, array $options = []): mixed
     {
-        return (object) ['url' => 'https://billing.stripe.com/p/session/test'];
+        $this->user = $user;
+        $this->portalOptions = $options;
+        $this->portalCount++;
+
+        return (object) ['url' => $this->portalUrl];
     }
 
     /**

@@ -221,6 +221,9 @@ Route::middleware('auth')->group(function () {
     Route::post('billing/checkout', [BillingController::class, 'checkout'])
         ->name('billing.checkout');
 
+    Route::post('billing/portal', [BillingController::class, 'portal'])
+        ->name('billing.portal');
+
     Route::get('billing/checkout/success', [BillingController::class, 'checkoutSuccess'])
         ->name('billing.checkout.success');
 

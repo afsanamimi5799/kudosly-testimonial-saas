@@ -300,11 +300,11 @@ test('the billing page reports the current plan and the available plans', functi
         ->assertSee('Pro');
 });
 
-test('the billing page does not offer a way to change plan', function () {
+test('the billing page no longer says that billing is unavailable', function () {
     $this->actingAs($this->user)
         ->get(route('billing.index'))
         ->assertOk()
-        ->assertSee('not available yet');
+        ->assertDontSee('not available yet');
 });
 
 /*
