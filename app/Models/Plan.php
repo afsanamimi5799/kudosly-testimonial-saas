@@ -54,4 +54,43 @@ class Plan extends Model
     {
         return $this->price / 100;
     }
+
+    /**
+     * The plan price in dollars for a full year.
+     *
+     * Kudosly Pro is sold as a yearly subscription, so the price held on
+     * the plan is already the yearly amount.
+     */
+    public function yearlyPrice(): float
+    {
+        return $this->priceInDollars();
+    }
+
+    /**
+     * The yearly price formatted for display.
+     */
+    public function yearlyPriceLabel(): string
+    {
+        return '$'.number_format($this->yearlyPrice(), 0);
+    }
+
+    /**
+     * Determine whether the plan is billed yearly.
+     *
+     * Kudosly only sells yearly subscriptions, so this is true for every
+     * plan that carries a price. It exists as a method so the billing
+     * interval has one definition rather than a literal at each call site.
+     */
+    public function isYearly(): bool
+    {
+        return true;
+    }
+
+    /**
+     * The recurring interval used when the plan is sold through Stripe.
+     */
+    public function billingInterval(): string
+    {
+        return 'year';
+    }
 }

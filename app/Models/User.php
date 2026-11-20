@@ -3,22 +3,25 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Billing\PlanCatalog;
 use App\Billing\PlanType;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Cashier\Billable;
 
 #[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'stripe_id', 'billing_email'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use Billable, HasFactory, Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -56,7 +59,7 @@ class User extends Authenticatable
      * missing record means the database is inconsistent. Fail loudly rather
      * than silently granting the wrong entitlements.
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function currentPlan(): Plan
     {
@@ -67,35 +70,81 @@ class User extends Authenticatable
     /**
      * The identity of the plan this account is currently on.
      *
+     * This reflects the plan the account is entitled to, so a Pro plan whose
+     * subscription has lapsed reads as Free.
+     *
      * @throws \ValueError when the plan slug is not a recognised plan type.
      */
     public function currentPlanType(): PlanType
     {
-        return $this->currentPlan()->type();
+        return $this->effectivePlanType();
     }
 
     /**
      * Determine whether this account is on the given plan.
+     *
+     * This reflects the plan the account is entitled to, so a Pro plan whose
+     * subscription has lapsed reads as Free.
      */
     public function hasPlan(PlanType $type): bool
     {
-        return $this->currentPlanType() === $type;
+        return $this->effectivePlanType() === $type;
     }
 
     /**
      * The maximum number of spaces allowed on the current plan.
+     *
+     * The limit follows the plan the account is entitled to, which is the
+     * stored plan while a Pro subscription is valid and the Free plan once
+     * that subscription has lapsed.
      */
     public function maxSpaces(): int
     {
-        return $this->currentPlan()->max_spaces;
+        return $this->effectivePlan()->max_spaces;
     }
 
     /**
      * The maximum number of testimonials allowed per space on the current plan.
+     *
+     * The limit follows the plan the account is entitled to, which is the
+     * stored plan while a Pro subscription is valid and the Free plan once
+     * that subscription has lapsed.
      */
     public function maxTestimonialsPerSpace(): int
     {
-        return $this->currentPlan()->max_testimonials_per_space;
+        return $this->effectivePlan()->max_testimonials_per_space;
+    }
+
+    /**
+     * The plan the account is entitled to right now.
+     *
+     * The stored plan is the entitlement. The Stripe webhook writes it when
+     * a subscription starts and when it ends, so this stays a cheap read
+     * with no call to Stripe.
+     */
+    public function effectivePlan(): Plan
+    {
+        return app(PlanCatalog::class)->effectivePlanFor($this);
+    }
+
+    /**
+     * The identity of the plan the account is entitled to right now.
+     */
+    public function effectivePlanType(): PlanType
+    {
+        return $this->effectivePlan()->type();
+    }
+
+    /**
+     * Determine whether the account holds a valid Pro subscription.
+     *
+     * This reads the subscription record, so it tells the difference between
+     * an account that is paying for Pro and an account that was granted Pro
+     * without a subscription behind it.
+     */
+    public function hasActiveSubscription(): bool
+    {
+        return app(PlanCatalog::class)->hasValidSubscription($this);
     }
 
     /**

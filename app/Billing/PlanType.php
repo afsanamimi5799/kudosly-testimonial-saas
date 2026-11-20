@@ -35,4 +35,14 @@ enum PlanType: string
     {
         return $this === self::Pro;
     }
+
+    /**
+     * The recurring interval used when the plan is sold through Stripe.
+     *
+     * Kudosly sells yearly subscriptions only.
+     */
+    public function billingInterval(): string
+    {
+        return 'year';
+    }
 }

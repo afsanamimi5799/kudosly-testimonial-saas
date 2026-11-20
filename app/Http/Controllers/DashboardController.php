@@ -83,7 +83,7 @@ class DashboardController extends Controller
             'testimonialsThisMonth' => $testimonialsThisMonth,
             'averageRating' => $averageRating > 0 ? number_format($averageRating, 1) : '—',
             'averageRatingFootnote' => $averageRating > 0 ? 'out of 5, where rated' : 'no ratings yet',
-            'planName' => $user->currentPlan()->name,
+            'planName' => $user->effectivePlan()->name,
             'isFreePlan' => $user->hasPlan(PlanType::Free),
             'spaceUsagePercentage' => $maxSpaces > 0 ? (int) min(100, round(($spacesCount / $maxSpaces) * 100)) : 0,
             'chart' => $submissionChart,
