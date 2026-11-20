@@ -239,7 +239,8 @@ test('the creation success screen shows the public url and the actions', functio
         ->assertOk()
         ->assertSee('Copy link')
         ->assertSee('View space')
-        ->assertSee('Go to dashboard')
+        ->assertSee('Go to spaces')
+        ->assertSee(route('spaces.index'))
         ->assertSee(url('/s/acme-reviews'));
 });
 

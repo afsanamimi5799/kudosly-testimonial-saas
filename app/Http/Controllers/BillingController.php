@@ -31,6 +31,7 @@ class BillingController extends Controller
         $currentPlan = $user->currentPlan();
         $spacesUsed = $user->spacesUsed();
         $status = $statuses->for($user);
+        $stripeConfigured = app(StripeGateway::class)->isConfigured();
 
         return view('billing', [
             'user' => $user,
@@ -45,8 +46,9 @@ class BillingController extends Controller
                 ? (int) min(100, round(($spacesUsed / $user->maxSpaces()) * 100))
                 : 0,
             'proPlan' => $catalog->find(PlanType::Pro),
-            'stripeConfigured' => app(StripeGateway::class)->isConfigured(),
+            'stripeConfigured' => $stripeConfigured,
             'canUpgrade' => $user->hasPlan(PlanType::Free)
+                && $stripeConfigured
                 && $catalog->hasStripePriceId(PlanType::Pro),
             'hasSubscription' => $user->hasActiveSubscription(),
             'status' => $status,

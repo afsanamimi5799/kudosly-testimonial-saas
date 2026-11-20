@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Billing\Contracts\StripeGateway;
+use App\Billing\PlanCatalog;
 use App\Billing\PlanType;
 use App\Dashboard\SubmissionChart;
 use App\Models\Testimonial;
@@ -24,7 +26,7 @@ class DashboardController extends Controller
      * recent testimonials show the customer name and a truncated excerpt of
      * the testimonial only.
      */
-    public function __invoke(Request $request, SubmissionChart $chart): View
+    public function __invoke(Request $request, SubmissionChart $chart, PlanCatalog $plans): View
     {
         $user = $request->user();
 
@@ -85,6 +87,10 @@ class DashboardController extends Controller
             'averageRatingFootnote' => $averageRating > 0 ? 'out of 5, where rated' : 'no ratings yet',
             'planName' => $user->effectivePlan()->name,
             'isFreePlan' => $user->hasPlan(PlanType::Free),
+            'canUpgrade' => $user->hasPlan(PlanType::Free)
+                && $plans->hasStripePriceId(PlanType::Pro)
+                && app(StripeGateway::class)->isConfigured(),
+            'proPriceLabel' => $plans->find(PlanType::Pro)?->yearlyPriceLabel(),
             'spaceUsagePercentage' => $maxSpaces > 0 ? (int) min(100, round(($spacesCount / $maxSpaces) * 100)) : 0,
             'chart' => $submissionChart,
             'chartRange' => $range,

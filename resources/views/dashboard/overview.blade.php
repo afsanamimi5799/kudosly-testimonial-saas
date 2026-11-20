@@ -95,7 +95,9 @@
             <div class="mt-5 border-t border-slate-100 pt-3 dark:border-slate-800/80">
                 @if ($isFreePlan)
                     <p class="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        Billing is not available yet and will arrive in a later release.
+                        <a href="{{ route('billing.index') }}" class="hover:text-slate-700 hover:underline dark:hover:text-slate-200">
+                            Upgrade to Pro for more spaces and testimonials.
+                        </a>
                     </p>
                 @else
                     <p class="text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -159,8 +161,8 @@
                 </span>
 
                 <input id="dashboard-space-search" type="search" name="search" placeholder="Search spaces..."
-                    disabled aria-disabled="true"
-                    class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-400 placeholder:text-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-500 dark:placeholder:text-slate-500">
+                    autocomplete="off"
+                    class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 dark:placeholder:text-slate-500">
             </div>
         </div>
 
@@ -185,13 +187,19 @@
                     <h4 class="relative mt-5 text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">No spaces yet</h4>
 
                     <p class="relative mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                        Spaces let you collect testimonials on a dedicated page. Creating and editing spaces is not available yet, so there is nothing to list.
+                        Spaces let you collect testimonials on a dedicated page. Create a space to get a link you can share with your customers.
                     </p>
+
+                    <a href="{{ route('spaces.create') }}"
+                        class="relative mt-5 inline-flex items-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-500">
+                        Create your first space
+                    </a>
                 </div>
             @else
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" id="dashboard-space-list">
                     @foreach ($spaces as $space)
-                        <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <div class="dashboard-space rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                            data-space-search="{{ Str::lower($space->name.' '.$space->title) }}">
                             <h4 class="truncate text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">{{ $space->name }}</h4>
                             <p class="mt-1 truncate text-sm text-slate-600 dark:text-slate-400">{{ $space->title }}</p>
 
@@ -208,6 +216,10 @@
                         </div>
                     @endforeach
                 </div>
+
+                <p id="dashboard-space-empty" class="hidden rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-10 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/30 dark:text-slate-400">
+                    No spaces match your search.
+                </p>
             @endif
         </div>
     </section>
@@ -251,7 +263,14 @@
     @if ($isFreePlan)
         <div class="flex flex-col gap-2 rounded-2xl border border-indigo-200 bg-indigo-50 px-5 py-4 text-sm text-indigo-900 dark:border-indigo-900/60 dark:bg-indigo-950/40 dark:text-indigo-200 sm:flex-row sm:items-center sm:gap-3">
             <span class="font-semibold">Upgrade for more spaces.</span>
-            <span class="text-indigo-700/80 dark:text-indigo-300/80">Billing is not available yet and will arrive in a later release.</span>
+
+            @if ($canUpgrade && $proPriceLabel)
+                <a href="{{ route('billing.index') }}" class="font-medium text-indigo-700 underline underline-offset-2 hover:text-indigo-900 dark:text-indigo-300 dark:hover:text-indigo-100">
+                    Pro is {{ $proPriceLabel }} per year.
+                </a>
+            @else
+                <span class="text-indigo-700/80 dark:text-indigo-300/80">Pro is {{ $proPriceLabel ?? '$999' }} per year.</span>
+            @endif
         </div>
     @endif
 
@@ -261,7 +280,7 @@
     @if ($totalTestimonials === 0)
         <x-app.overview.empty-state
             title="No testimonials yet"
-            description="Once you have a space, you can share a collection link and testimonials will appear here. Collection arrives in a later release."
+            description="Once you have a space, you can share a collection link and testimonials will appear here."
         >
             <x-slot:icon>
                 <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -272,3 +291,42 @@
         </x-app.overview.empty-state>
     @endif
 </div>
+
+<script>
+    (function () {
+        var input = document.getElementById('dashboard-space-search');
+
+        if (! input) {
+            return;
+        }
+
+        var cards = Array.prototype.slice.call(
+            document.querySelectorAll('#dashboard-space-list .dashboard-space')
+        );
+        var empty = document.getElementById('dashboard-space-empty');
+
+        if (cards.length === 0) {
+            return;
+        }
+
+        input.addEventListener('input', function () {
+            var term = input.value.trim().toLowerCase();
+            var shown = 0;
+
+            cards.forEach(function (card) {
+                var matches = term === ''
+                    || (card.getAttribute('data-space-search') || '').indexOf(term) !== -1;
+
+                card.classList.toggle('hidden', ! matches);
+
+                if (matches) {
+                    shown++;
+                }
+            });
+
+            if (empty) {
+                empty.classList.toggle('hidden', shown !== 0);
+            }
+        });
+    })();
+</script>
