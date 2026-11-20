@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicCollection\SpaceCollectionController;
 use App\Http\Controllers\PublicWall\WallController;
 use App\Http\Controllers\SpacesController;
+use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TestimonialModerationController;
 use App\Http\Controllers\WallOfLoveController;
 use App\Http\Controllers\WidgetEmbedController;
@@ -20,6 +21,21 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Stripe webhook
+|--------------------------------------------------------------------------
+|
+| Stripe posts to this endpoint from outside the application, so it is
+| reachable without a session and without a CSRF token. The request is
+| trusted only when the signature of the payload matches the webhook
+| secret, which the controller checks before it reads anything.
+|
+*/
+
+Route::post('stripe/webhook', StripeWebhookController::class)
+    ->name('stripe.webhook');
 
 /*
 |--------------------------------------------------------------------------

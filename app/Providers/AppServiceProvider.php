@@ -6,6 +6,7 @@ use App\Billing\Contracts\StripeGateway;
 use App\Billing\StripeGateway as StripeGatewayImplementation;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Cashier\Cashier;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,6 +15,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Cashier registers its own webhook route under the same path as the
+        // one in this application. The route in routes/web.php is the one
+        // that is used, so Cashier's is switched off to keep a single route
+        // that answers on the Stripe webhook path.
+        Cashier::ignoreRoutes();
+
         // The billing services talk to Stripe through the contract, so the
         // binding can be swapped for a fake while the billing features are
         // exercised without reaching Stripe.
