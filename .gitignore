@@ -1,0 +1,50 @@
+*.log
+.DS_Store
+.env
+.env.backup
+.env.production
+.env.*.local
+*.pem
+*.key
+*.crt
+*.p12
+/auth.json
+/.npmrc
+/phpactor.json
+/.phpunit.result.cache
+/.codex
+/.cursor/
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/node_modules
+/public/build
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+Thumbs.db
+
+# Local database files and SQL backups. These hold real customer records.
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+/database/*.sqlite
+
+# Customer uploaded files. These are copies of customer pictures and must
+# never be committed. The directory structure is kept by the .gitkeep files.
+/storage/app/public/profile-photos
+/storage/app/private
+/storage/app/*.key
+
+# Local tool state
+/.puku-cli
+
