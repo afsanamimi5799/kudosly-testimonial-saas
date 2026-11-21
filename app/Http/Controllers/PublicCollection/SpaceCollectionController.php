@@ -9,10 +9,7 @@ use App\Http\Requests\SubmitTestimonialRequest;
 use App\Models\Space;
 use App\Models\Testimonial;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
@@ -21,21 +18,13 @@ use Illuminate\View\View;
  * These actions are reachable without a session. A visitor submits a
  * testimonial to a space, and the testimonial is stored as pending for the
  * owner to moderate.
+ *
+ * The submission route is limited by the throttle middleware, which counts
+ * every attempt against the address the request came from. The controller
+ * therefore does not count attempts itself.
  */
 class SpaceCollectionController extends Controller
 {
-    /**
-     * The number of minutes a visitor is locked out for after too many
-     * rejected submissions from the same address.
-     */
-    private const THROTTLE_MINUTES = 10;
-
-    /**
-     * The maximum number of submissions allowed per address in the
-     * throttle window.
-     */
-    private const MAX_ATTEMPTS = 5;
-
     /**
      * Show the collection page for a space.
      */
@@ -54,16 +43,6 @@ class SpaceCollectionController extends Controller
      */
     public function store(SubmitTestimonialRequest $request, Space $space): RedirectResponse
     {
-        $throttleKey = $this->throttleKey($request);
-
-        if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
-            return redirect()
-                ->route('spaces.public.show', ['space' => $space->slug])
-                ->withErrors([
-                    'customer_email' => 'Too many submissions from your connection. Please try again later.',
-                ]);
-        }
-
         // The plan limits how many testimonials a space may collect. The
         // check happens before the submission is stored so that a customer
         // is never told their testimonial was received when it was not.
@@ -71,7 +50,7 @@ class SpaceCollectionController extends Controller
             return redirect()
                 ->route('spaces.public.show', ['space' => $space->slug])
                 ->withErrors([
-                    'customer_email' => 'This space is not accepting new testimonials right now.',
+                    'error' => 'This space is not accepting new testimonials right now.',
                 ]);
         }
 
@@ -96,8 +75,6 @@ class SpaceCollectionController extends Controller
                 'status' => TestimonialStatus::Pending,
             ]);
         });
-
-        RateLimiter::hit($throttleKey, self::THROTTLE_MINUTES * 60);
 
         return redirect()
             ->route('spaces.public.thanks', ['space' => $space->slug]);
@@ -128,15 +105,5 @@ class SpaceCollectionController extends Controller
         $value = $validated[$key->value] ?? null;
 
         return is_string($value) && $value !== '' ? $value : null;
-    }
-
-    /**
-     * The rate limiter key for a submission.
-     */
-    private function throttleKey(Request $request): string
-    {
-        return Str::transliterate(
-            'public-collection|'.$request->ip().'|'.$request->userAgent()
-        );
     }
 }

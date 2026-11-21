@@ -333,9 +333,31 @@ test('a space that reached its testimonial limit rejects new submissions', funct
         'customer_email' => 'ada@example.com',
         'testimonial_text' => 'Great product',
         'rating' => 4,
-    ])->assertSessionHasErrors('customer_email');
+    ])->assertSessionHasErrors('error');
 
     expect(Testimonial::query()->count())->toBe(100);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Rate limiting
+|--------------------------------------------------------------------------
+|
+| The submission route is limited by the throttle middleware. The limit is
+| counted against the address the request came from, and every attempt is
+| counted whether or not it turns into a stored testimonial.
+|
+*/
+
+test('a visitor can submit a testimonial normally', function () {
+    $this->post(route('spaces.public.store', ['space' => $this->space->slug]), [
+        'customer_name' => 'Ada Lovelace',
+        'customer_email' => 'ada@example.com',
+        'testimonial_text' => 'Great product',
+        'rating' => 4,
+    ])->assertRedirect(route('spaces.public.thanks', ['space' => $this->space->slug]));
+
+    expect(Testimonial::query()->count())->toBe(1);
 });
 
 test('submissions from the same address are throttled', function () {
@@ -355,9 +377,127 @@ test('submissions from the same address are throttled', function () {
         'rating' => 4,
     ]);
 
-    $response->assertSessionHasErrors('customer_email');
+    $response->assertStatus(429);
 
     expect(Testimonial::query()->count())->toBe(5);
+});
+
+test('the throttle answer carries the rate limit headers', function () {
+    for ($attempt = 1; $attempt <= 6; $attempt++) {
+        $response = $this->post(route('spaces.public.store', ['space' => $this->space->slug]), [
+            'customer_name' => 'Ada Lovelace',
+            'customer_email' => 'ada@example.com',
+            'testimonial_text' => 'Great product',
+            'rating' => 4,
+        ]);
+    }
+
+    $response->assertStatus(429)
+        ->assertHeader('Retry-After')
+        ->assertHeader('X-RateLimit-Limit');
+});
+
+test('changing the browser does not buy a visitor more attempts', function () {
+    for ($attempt = 1; $attempt <= 5; $attempt++) {
+        $this->withHeaders(['User-Agent' => 'Browser '.$attempt])
+            ->post(route('spaces.public.store', ['space' => $this->space->slug]), [
+                'customer_name' => 'Ada Lovelace',
+                'customer_email' => 'ada@example.com',
+                'testimonial_text' => 'Great product',
+                'rating' => 4,
+            ]);
+    }
+
+    // The sixth attempt is turned away even though the browser is new.
+    $response = $this->withHeaders(['User-Agent' => 'Browser 6'])
+        ->post(route('spaces.public.store', ['space' => $this->space->slug]), [
+            'customer_name' => 'Ada Lovelace',
+            'customer_email' => 'ada@example.com',
+            'testimonial_text' => 'Great product',
+            'rating' => 4,
+        ]);
+
+    $response->assertStatus(429);
+
+    expect(Testimonial::query()->count())->toBe(5);
+});
+
+test('an attempt that fails validation still counts towards the limit', function () {
+    for ($attempt = 1; $attempt <= 5; $attempt++) {
+        $this->post(route('spaces.public.store', ['space' => $this->space->slug]), [
+            'customer_name' => '',
+            'customer_email' => 'not-an-email',
+            'testimonial_text' => '',
+        ])->assertSessionHasErrors(['customer_name', 'customer_email', 'testimonial_text']);
+    }
+
+    // The submissions were all rejected, but they still used up the budget.
+    $response = $this->post(route('spaces.public.store', ['space' => $this->space->slug]), [
+        'customer_name' => 'Ada Lovelace',
+        'customer_email' => 'ada@example.com',
+        'testimonial_text' => 'Great product',
+        'rating' => 4,
+    ]);
+
+    $response->assertStatus(429);
+
+    expect(Testimonial::query()->count())->toBe(0);
+});
+
+test('a visitor who stays within the limit is never turned away', function () {
+    for ($attempt = 1; $attempt <= 5; $attempt++) {
+        $this->post(route('spaces.public.store', ['space' => $this->space->slug]), [
+            'customer_name' => 'Ada Lovelace',
+            'customer_email' => 'ada@example.com',
+            'testimonial_text' => 'Great product '.$attempt,
+            'rating' => 4,
+        ])->assertRedirect(route('spaces.public.thanks', ['space' => $this->space->slug]));
+    }
+
+    expect(Testimonial::query()->count())->toBe(5);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Spam prevention
+|--------------------------------------------------------------------------
+|
+| The form carries a field that people cannot see. A script that fills in
+| every field it finds is turned away without storing anything.
+|
+*/
+
+test('a submission that fills in the hidden field is quietly dropped', function () {
+    $response = $this->post(route('spaces.public.store', ['space' => $this->space->slug]), [
+        'customer_name' => 'Ada Lovelace',
+        'customer_email' => 'ada@example.com',
+        'testimonial_text' => 'Buy cheap watches',
+        'rating' => 5,
+        'website' => 'https://spam.example.com',
+    ]);
+
+    // The answer is the same one a real submission receives.
+    $response->assertRedirect(route('spaces.public.thanks', ['space' => $this->space->slug]));
+
+    expect(Testimonial::query()->count())->toBe(0);
+});
+
+test('a submission that leaves the hidden field empty is accepted', function () {
+    $this->post(route('spaces.public.store', ['space' => $this->space->slug]), [
+        'customer_name' => 'Ada Lovelace',
+        'customer_email' => 'ada@example.com',
+        'testimonial_text' => 'Great product',
+        'rating' => 5,
+        'website' => '',
+    ])->assertRedirect(route('spaces.public.thanks', ['space' => $this->space->slug]));
+
+    expect(Testimonial::query()->count())->toBe(1);
+});
+
+test('the collection page carries the hidden field', function () {
+    $this->get(route('spaces.public.show', ['space' => $this->space->slug]))
+        ->assertOk()
+        ->assertSee('name="website"', false);
 });
 
 /*

@@ -34,6 +34,12 @@
                     enctype="multipart/form-data" class="space-y-5">
                     @csrf
 
+                    {{-- A field that people cannot see and never fill in. A script that fills in every field it finds is turned away by the server. --}}
+                    <div class="hidden" aria-hidden="true">
+                        <label for="website">Leave this field empty</label>
+                        <input type="text" name="website" id="website" value="" tabindex="-1" autocomplete="off">
+                    </div>
+
                     <div>
                         <label for="customer_name" class="block text-sm font-medium">
                             Your name <span class="text-red-500">*</span>

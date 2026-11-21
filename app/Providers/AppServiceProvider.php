@@ -4,12 +4,27 @@ namespace App\Providers;
 
 use App\Billing\Contracts\StripeGateway;
 use App\Billing\StripeGateway as StripeGatewayImplementation;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Cashier;
 
 class AppServiceProvider extends ServiceProvider
 {
+    /**
+     * The number of minutes a visitor is locked out for after too many
+     * attempts from the same address.
+     */
+    private const PUBLIC_SUBMISSION_MINUTES = 10;
+
+    /**
+     * The number of attempts allowed from one address in that window.
+     */
+    private const PUBLIC_SUBMISSION_ATTEMPTS = 5;
+
     /**
      * Register any application services.
      */
@@ -33,6 +48,34 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->shareNavigationContext();
+        $this->limitPublicSubmissions();
+    }
+
+    /**
+     * Limit how often a visitor may submit a testimonial.
+     *
+     * The collection form is public, so it is the one place an outsider can
+     * write to the application. The limit is counted against the address the
+     * request came from and nothing else: the browser the visitor happens to
+     * use is not part of the key, so changing it cannot buy a visitor more
+     * attempts.
+     *
+     * Every attempt is counted, including one that fails validation, because
+     * the throttle middleware counts the request before the form is checked.
+     */
+    private function limitPublicSubmissions(): void
+    {
+        RateLimiter::for('public-collection', function (Request $request) {
+            return Limit::perMinutes(self::PUBLIC_SUBMISSION_MINUTES, self::PUBLIC_SUBMISSION_ATTEMPTS)
+                ->by($request->ip())
+                ->response(function (Request $request, array $headers) {
+                    return response(
+                        'Too many submissions from your connection. Please try again later.',
+                        Response::HTTP_TOO_MANY_REQUESTS,
+                        $headers
+                    );
+                });
+        });
     }
 
     /**

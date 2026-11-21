@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\SpaceFieldKey;
 use App\Models\Space;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 
 /**
@@ -23,15 +24,39 @@ class SubmitTestimonialRequest extends FormRequest
     public const MAX_PHOTO_KILOBYTES = 2048;
 
     /**
+     * The name of the field that is hidden from people and filled in by
+     * automated submissions.
+     */
+    public const HONEYPOT_FIELD = 'website';
+
+    /**
      * Determine if the user is authorized to make this request.
      *
-     * The collection page is public, so there is no authorization check
-     * here. The space is resolved from the route and is not owned by the
-     * visitor.
+     * The collection page is public, so the visitor is not authorized
+     * against the space, which is resolved from the route and is not owned
+     * by them.
+     *
+     * The one thing that is checked is the hidden field. A person filling
+     * in the form never sees it and leaves it empty. A script that fills
+     * in every field it finds is caught here, before anything is stored.
      */
     public function authorize(): bool
     {
-        return true;
+        return blank($this->input(self::HONEYPOT_FIELD));
+    }
+
+    /**
+     * Handle a request that failed the authorization check.
+     *
+     * The submission is quietly dropped and the visitor is sent to the
+     * same page a successful submission reaches. Nothing is stored and the
+     * response gives away that the hidden field was noticed.
+     */
+    protected function failedAuthorization(): void
+    {
+        throw new HttpResponseException(
+            redirect()->route('spaces.public.thanks', ['space' => $this->space()?->slug])
+        );
     }
 
     /**
@@ -52,6 +77,7 @@ class SubmitTestimonialRequest extends FormRequest
             'customer_email' => ['required', 'string', 'email', 'max:255'],
             'testimonial_text' => ['required', 'string', 'max:5000'],
             'sharing_consent' => ['nullable', 'boolean'],
+            self::HONEYPOT_FIELD => ['nullable', 'string', 'max:255'],
         ];
 
         if ($space->rating_enabled) {

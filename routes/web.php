@@ -52,6 +52,7 @@ Route::get('s/{space:slug}', [SpaceCollectionController::class, 'show'])
     ->name('spaces.public.show');
 
 Route::post('s/{space:slug}', [SpaceCollectionController::class, 'store'])
+    ->middleware('throttle:public-collection')
     ->name('spaces.public.store');
 
 Route::get('s/{space:slug}/thanks', [SpaceCollectionController::class, 'thanks'])
