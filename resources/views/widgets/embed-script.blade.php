@@ -11,6 +11,14 @@
      */
     var PLACEHOLDER_SELECTOR = '[data-kudosly-widget]';
 
+    /**
+     * The smallest and the tallest height an iframe is allowed to take.
+     * A height outside this range is not applied, so a stray or hostile
+     * message cannot collapse the widget or blow it out of the page.
+     */
+    var MIN_HEIGHT = 80;
+    var MAX_HEIGHT = 4000;
+
     function embedUrlFor(placeholder) {
         var widgetId = placeholder.getAttribute('data-kudosly-widget');
 
@@ -28,6 +36,22 @@
             url.hash = '';
 
             return url.toString();
+        } catch (error) {
+            return null;
+        }
+    }
+
+    /**
+     * The origin the widget is served from.
+     *
+     * The resize message always comes from the widget itself, so the origin
+     * of the widget document is the only origin that may speak to us. The
+     * host page may be any website in the world; it never needs to be known
+     * here.
+     */
+    function widgetOrigin(iframe) {
+        try {
+            return new URL(iframe.getAttribute('src'), window.location.href).origin;
         } catch (error) {
             return null;
         }
@@ -58,23 +82,44 @@
         placeholder.setAttribute('data-kudosly-loaded', 'true');
 
         var iframe = build(widgetId, placeholder);
+        var origin = widgetOrigin(iframe);
 
         // The widget document reports its own height so that the iframe can
-        // grow with the content instead of clipping it.
+        // grow with the content instead of clipping it. The message is only
+        // acted on when it comes from the widget itself, from this very
+        // iframe, and when it carries a height that is safe to use.
         window.addEventListener('message', function (event) {
-            if (!event.data || event.data.type !== 'kudosly-widget-resize') {
+            if (!origin || event.origin !== origin) {
                 return;
             }
 
-            if (event.data.widgetId !== widgetId) {
+            if (event.source !== iframe.contentWindow) {
                 return;
             }
 
-            if (typeof event.data.height !== 'number') {
+            if (!event.data || typeof event.data !== 'object' || Array.isArray(event.data)) {
                 return;
             }
 
-            iframe.style.height = event.data.height + 'px';
+            if (event.data.type !== 'kudosly-widget-resize') {
+                return;
+            }
+
+            if (typeof event.data.widgetId !== 'string' || event.data.widgetId !== widgetId) {
+                return;
+            }
+
+            var height = event.data.height;
+
+            if (typeof height !== 'number' || !isFinite(height)) {
+                return;
+            }
+
+            if (height < MIN_HEIGHT || height > MAX_HEIGHT) {
+                return;
+            }
+
+            iframe.style.height = height + 'px';
         });
     }
 

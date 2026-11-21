@@ -319,6 +319,12 @@ test('the embed shows the rating of a rated testimonial', function () {
 |--------------------------------------------------------------------------
 | The caching
 |--------------------------------------------------------------------------
+|
+| The embed may be stored by any cache, but a cache must always ask the
+| server whether the copy it holds is still current. A testimonial is only
+| public while the customer keeps their permission, so a cached copy that
+| was made before a permission was withdrawn may never be handed out.
+|
 */
 
 test('the embed response may be cached publicly', function () {
@@ -326,6 +332,41 @@ test('the embed response may be cached publicly', function () {
 
     expect($response->headers->get('Cache-Control'))->toContain('public')
         ->and($response->headers->get('ETag'))->not->toBeNull();
+});
+
+test('the embed response must be revalidated before it is reused', function () {
+    $response = $this->get(route('widgets.embed.show', ['widget' => $this->widget->public_id]));
+
+    // A cache may store the embed, but it may not serve it again without
+    // asking, because the testimonials on it can stop being public at any
+    // moment.
+    expect($response->headers->get('Cache-Control'))->toContain('no-cache')
+        ->and($response->headers->get('Cache-Control'))->toContain('must-revalidate');
+});
+
+test('the embed response is never fresh without asking', function () {
+    $response = $this->get(route('widgets.embed.show', ['widget' => $this->widget->public_id]));
+
+    // A max-age would let a cache serve the stored body for that long
+    // without ever asking the server.
+    expect($response->headers->get('Cache-Control'))->not->toContain('max-age');
+});
+
+test('the data response must be revalidated before it is reused', function () {
+    $response = $this->get(route('widgets.embed.data', ['widget' => $this->widget->public_id]));
+
+    expect($response->headers->get('Cache-Control'))->toContain('public')
+        ->and($response->headers->get('Cache-Control'))->toContain('no-cache')
+        ->and($response->headers->get('Cache-Control'))->toContain('must-revalidate')
+        ->and($response->headers->get('Cache-Control'))->not->toContain('max-age');
+});
+
+test('the loader script is still cached for a long time', function () {
+    $response = $this->get(route('widgets.embed.script'));
+
+    // The script carries no testimonial, so it may be cached freely.
+    expect($response->headers->get('Cache-Control'))->toContain('public')
+        ->and($response->headers->get('Cache-Control'))->toContain('max-age=3600');
 });
 
 test('the embed response does not vary by cookie', function () {
@@ -357,6 +398,201 @@ test('the embed entity tag changes when the widget changes', function () {
     $second = $this->get($url)->headers->get('ETag');
 
     expect($second)->not->toBe($first);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Cached copies and withdrawn permission
+|--------------------------------------------------------------------------
+|
+| A cache holds on to the embed it was given. When a testimonial stops
+| being public, the copy the cache holds must stop matching, so that the
+| next visitor is served a fresh body without that testimonial in it.
+|
+*/
+
+test('the embed entity tag changes when a testimonial is hidden', function () {
+    $url = route('widgets.embed.show', ['widget' => $this->widget->public_id]);
+
+    $testimonial = Testimonial::factory()->approved()->for($this->space)->create([
+        'customer_name' => 'Ada Lovelace',
+        'sharing_consent' => true,
+    ]);
+
+    $first = $this->get($url)->headers->get('ETag');
+
+    $this->actingAs($this->owner)
+        ->post(route('testimonials.hide', ['testimonial' => $testimonial]));
+
+    $second = $this->get($url)->headers->get('ETag');
+
+    expect($second)->not->toBe($first);
+});
+
+test('a cached embed is not reused after a testimonial was hidden', function () {
+    $url = route('widgets.embed.show', ['widget' => $this->widget->public_id]);
+
+    $testimonial = Testimonial::factory()->approved()->for($this->space)->create([
+        'customer_name' => 'Ada Lovelace',
+        'sharing_consent' => true,
+    ]);
+
+    $etag = $this->get($url)->headers->get('ETag');
+
+    $this->actingAs($this->owner)
+        ->post(route('testimonials.hide', ['testimonial' => $testimonial]));
+
+    // The cache asks with the tag it was given before the change. The tag
+    // no longer matches, so the cache is handed a fresh body instead of the
+    // copy it already holds.
+    $response = $this->withHeaders(['If-None-Match' => $etag])->get($url);
+
+    $response->assertOk();
+
+    expect($response->getContent())->not->toContain('Ada Lovelace');
+});
+
+test('the data entity tag changes when a testimonial is hidden', function () {
+    $url = route('widgets.embed.data', ['widget' => $this->widget->public_id]);
+
+    $testimonial = Testimonial::factory()->approved()->for($this->space)->create([
+        'customer_name' => 'Ada Lovelace',
+        'sharing_consent' => true,
+    ]);
+
+    $first = $this->get($url)->headers->get('ETag');
+
+    $this->actingAs($this->owner)
+        ->post(route('testimonials.hide', ['testimonial' => $testimonial]));
+
+    $second = $this->get($url)->headers->get('ETag');
+
+    expect($second)->not->toBe($first);
+});
+
+test('a cached data payload is not reused after a testimonial was hidden', function () {
+    $url = route('widgets.embed.data', ['widget' => $this->widget->public_id]);
+
+    $testimonial = Testimonial::factory()->approved()->for($this->space)->create([
+        'customer_name' => 'Ada Lovelace',
+        'sharing_consent' => true,
+    ]);
+
+    $etag = $this->get($url)->headers->get('ETag');
+
+    $this->actingAs($this->owner)
+        ->post(route('testimonials.hide', ['testimonial' => $testimonial]));
+
+    $response = $this->withHeaders(['If-None-Match' => $etag])->get($url);
+
+    $response->assertOk();
+
+    expect($response->getContent())->not->toContain('Ada Lovelace');
+});
+
+test('the embed entity tag changes when a testimonial is deleted', function () {
+    $url = route('widgets.embed.show', ['widget' => $this->widget->public_id]);
+
+    $testimonial = Testimonial::factory()->approved()->for($this->space)->create([
+        'customer_name' => 'Ada Lovelace',
+        'sharing_consent' => true,
+    ]);
+
+    $first = $this->get($url)->headers->get('ETag');
+
+    $testimonial->delete();
+
+    $second = $this->get($url)->headers->get('ETag');
+
+    expect($second)->not->toBe($first);
+});
+
+test('a cached embed is not reused after a testimonial was deleted', function () {
+    $url = route('widgets.embed.show', ['widget' => $this->widget->public_id]);
+
+    $testimonial = Testimonial::factory()->approved()->for($this->space)->create([
+        'customer_name' => 'Ada Lovelace',
+        'sharing_consent' => true,
+    ]);
+
+    $etag = $this->get($url)->headers->get('ETag');
+
+    $testimonial->delete();
+
+    $response = $this->withHeaders(['If-None-Match' => $etag])->get($url);
+
+    $response->assertOk();
+
+    expect($response->getContent())->not->toContain('Ada Lovelace');
+});
+
+test('the embed entity tag changes when sharing consent is withdrawn', function () {
+    $url = route('widgets.embed.show', ['widget' => $this->widget->public_id]);
+
+    $testimonial = Testimonial::factory()->approved()->for($this->space)->create([
+        'customer_name' => 'Ada Lovelace',
+        'sharing_consent' => true,
+    ]);
+
+    $first = $this->get($url)->headers->get('ETag');
+
+    $testimonial->update(['sharing_consent' => false]);
+
+    $second = $this->get($url)->headers->get('ETag');
+
+    expect($second)->not->toBe($first);
+});
+
+test('a cached embed is not reused after sharing consent was withdrawn', function () {
+    $url = route('widgets.embed.show', ['widget' => $this->widget->public_id]);
+
+    $testimonial = Testimonial::factory()->approved()->for($this->space)->create([
+        'customer_name' => 'Ada Lovelace',
+        'sharing_consent' => true,
+    ]);
+
+    $etag = $this->get($url)->headers->get('ETag');
+
+    $testimonial->update(['sharing_consent' => false]);
+
+    $response = $this->withHeaders(['If-None-Match' => $etag])->get($url);
+
+    $response->assertOk();
+
+    expect($response->getContent())->not->toContain('Ada Lovelace');
+});
+
+test('a cached data payload is not reused after sharing consent was withdrawn', function () {
+    $url = route('widgets.embed.data', ['widget' => $this->widget->public_id]);
+
+    $testimonial = Testimonial::factory()->approved()->for($this->space)->create([
+        'customer_name' => 'Ada Lovelace',
+        'sharing_consent' => true,
+    ]);
+
+    $etag = $this->get($url)->headers->get('ETag');
+
+    $testimonial->update(['sharing_consent' => false]);
+
+    $response = $this->withHeaders(['If-None-Match' => $etag])->get($url);
+
+    $response->assertOk();
+
+    expect($response->getContent())->not->toContain('Ada Lovelace');
+});
+
+test('the embed entity tag is unchanged while nothing about the content changes', function () {
+    $url = route('widgets.embed.show', ['widget' => $this->widget->public_id]);
+
+    Testimonial::factory()->approved()->for($this->space)->create([
+        'customer_name' => 'Ada Lovelace',
+        'sharing_consent' => true,
+    ]);
+
+    $first = $this->get($url)->headers->get('ETag');
+    $second = $this->get($url)->headers->get('ETag');
+
+    expect($second)->toBe($first);
 });
 
 /*

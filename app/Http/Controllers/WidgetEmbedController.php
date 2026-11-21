@@ -16,21 +16,14 @@ use Illuminate\View\View;
  * its unguessable public id, and it may only ever show the testimonials that
  * are approved and that the customer gave explicit permission to display.
  *
- * The responses are identical for every visitor, so they may be cached by
- * any intermediary. They never vary by cookie and never carry a session.
+ * The responses are identical for every visitor, so they may be stored by any
+ * intermediary. They never vary by cookie and never carry a session. A cache
+ * may hold on to them, but it has to ask the server whether they are still
+ * current before it hands them out, because the moment a customer withdraws
+ * their permission the testimonial has to disappear.
  */
 class WidgetEmbedController extends Controller
 {
-    /**
-     * The number of minutes a cached embed response stays fresh.
-     */
-    private const CACHE_MINUTES = 5;
-
-    /**
-     * The number of minutes a cached data response stays fresh.
-     */
-    private const DATA_CACHE_MINUTES = 1;
-
     /**
      * Show the widget as a standalone document for an iframe.
      */
@@ -43,7 +36,7 @@ class WidgetEmbedController extends Controller
             'testimonials' => $testimonials,
         ]);
 
-        return $this->withCacheHeaders($response, $widget, self::CACHE_MINUTES);
+        return $this->withCacheHeaders($response, $widget, $renderer);
     }
 
     /**
@@ -73,7 +66,7 @@ class WidgetEmbedController extends Controller
             ])->values(),
         ]);
 
-        return $this->withCacheHeaders($response, $widget, self::DATA_CACHE_MINUTES);
+        return $this->withCacheHeaders($response, $widget, $renderer);
     }
 
     /**
@@ -82,6 +75,8 @@ class WidgetEmbedController extends Controller
      * The script only inserts an iframe into the placeholder element. It
      * never injects a stylesheet and never touches the styles of the host
      * website, so the embed cannot break the page it is placed on.
+     *
+     * The script carries no testimonial, so it may be cached for a long time.
      */
     public function script(Request $request): Response
     {
@@ -95,13 +90,18 @@ class WidgetEmbedController extends Controller
     /**
      * Add the public cache headers to an embed response.
      *
-     * The response is the same for every visitor, so it may be cached by
-     * anybody. The entity tag is derived from the widget and the moment it
-     * was last changed, so a settings change invalidates the cached copy.
+     * The response is the same for every visitor, so any cache may store it.
+     * It may not, however, hand it out without asking first: the content is
+     * only public while the customer keeps their permission, and that can
+     * end at any moment. The response therefore asks for revalidation, and
+     * the entity tag is built from the widget settings together with a
+     * fingerprint of the testimonials that are on show. A change to either
+     * of them produces a new tag, so the cache fetches a fresh body instead
+     * of the copy it already holds.
      */
-    private function withCacheHeaders(Response|JsonResponse $response, Widget $widget, int $minutes): Response|JsonResponse
+    private function withCacheHeaders(Response|JsonResponse $response, Widget $widget, EmbedRenderer $renderer): Response|JsonResponse
     {
-        $etag = '"'.$widget->public_id.'-'.$widget->updated_at?->getTimestamp().'-'.$widget->displayLimit().'"';
+        $etag = '"'.$widget->public_id.'-'.$widget->updated_at?->getTimestamp().'-'.$widget->displayLimit().'-'.$renderer->fingerprint($widget).'"';
 
         if ($request = request()) {
             if ($request->headers->get('If-None-Match') === $etag) {
@@ -110,7 +110,7 @@ class WidgetEmbedController extends Controller
         }
 
         return $response
-            ->header('Cache-Control', 'public, max-age='.($minutes * 60))
+            ->header('Cache-Control', 'public, no-cache, must-revalidate')
             ->header('ETag', $etag);
     }
 }
