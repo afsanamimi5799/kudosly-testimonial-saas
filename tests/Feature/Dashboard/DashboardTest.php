@@ -1,6 +1,7 @@
 <?php
 
 use App\Billing\PlanType;
+use App\Dashboard\SubmissionChart;
 use App\Models\Space;
 use App\Models\Testimonial;
 use App\Models\User;
@@ -484,6 +485,87 @@ test('an unknown chart range falls back to the default', function () {
 
     expect($chart['range'])->toBe(30);
 });
+
+/*
+|--------------------------------------------------------------------------
+| The chart labels are not cut off
+|--------------------------------------------------------------------------
+|
+| The first and the last date label are centred on the first and the last
+| bar, so half of each of them reaches past the edge of the plot. The
+| chart therefore keeps a margin free on both sides, otherwise the last
+| date is cut off.
+|
+*/
+
+test('the chart keeps a margin free on both sides for the date labels', function () {
+    $this->actingAs($this->user)
+        ->get(route('dashboard'))
+        ->assertOk();
+
+    $padding = SubmissionChart::LABEL_PADDING;
+
+    expect($padding)->toBeGreaterThan(0);
+});
+
+test('the chart view box leaves room for the first and the last label', function () {
+    $this->actingAs($this->user)
+        ->get(route('dashboard'))
+        ->assertOk();
+
+    $width = SubmissionChart::WIDTH;
+    $padding = SubmissionChart::LABEL_PADDING;
+
+    // The view box starts to the left of the first bar and reaches past
+    // the last one by the same distance.
+    expect($width)->toBe(720)
+        ->and($padding)->toBe(24);
+});
+
+test('the chart renders a view box that is wider than the plot on both sides', function () {
+    $space = Space::factory()->for($this->user)->create();
+
+    Testimonial::factory()->for($space)->create(['created_at' => now()]);
+
+    $html = $this->actingAs($this->user)->get(route('dashboard'))->getContent();
+
+    $width = SubmissionChart::WIDTH;
+    $padding = SubmissionChart::LABEL_PADDING;
+
+    expect($html)->toContain('viewBox="-'.$padding.' 0 '.($width + ($padding * 2)).' ', escape: false);
+});
+
+test('the bars of the chart still start at the left of the plot', function () {
+    $space = Space::factory()->for($this->user)->create();
+
+    Testimonial::factory()->for($space)->create(['created_at' => now()]);
+
+    $html = $this->actingAs($this->user)->get(route('dashboard'))->getContent();
+
+    // The bars keep their own coordinates. Only the view box moved, so
+    // the plot itself is not squeezed.
+    expect($html)->toContain('x="1.00"', escape: false);
+});
+
+test('the chart labels are inside the view box for every range', function (string $range) {
+    $chart = $this->actingAs($this->user)
+        ->get(route('dashboard', ['range' => $range]))
+        ->viewData('chart');
+
+    $width = SubmissionChart::WIDTH;
+    $padding = SubmissionChart::LABEL_PADDING;
+    $barWidth = $width / $chart['range'];
+
+    // The last label is centred on the last bar and the first label is
+    // centred on the first one. Both have to fit inside the view box.
+    $lastLabelX = (($chart['range'] - 1) * $barWidth) + ($barWidth / 2);
+    $firstLabelX = $barWidth / 2;
+
+    $halfLabelWidth = 26;
+
+    expect($lastLabelX + $halfLabelWidth)->toBeLessThanOrEqual($width + $padding)
+        ->and($firstLabelX - $halfLabelWidth)->toBeGreaterThanOrEqual(-$padding);
+})->with(['7 days' => '7', '30 days' => '30', '90 days' => '90']);
 
 test('the chart offers the seven thirty and ninety day links', function () {
     $this->actingAs($this->user)

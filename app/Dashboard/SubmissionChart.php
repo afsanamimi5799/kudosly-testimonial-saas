@@ -39,6 +39,16 @@ class SubmissionChart
     public const WIDTH = 720;
 
     /**
+     * The space kept free on each side of the plot for the date labels.
+     *
+     * The first and the last label are centred on the first and the last
+     * bar, so half of each of them reaches past the edge of the plot. The
+     * viewBox is widened by this much on both sides so that neither of
+     * them is cut off.
+     */
+    public const LABEL_PADDING = 24;
+
+    /**
      * Build the chart for the account.
      *
      * The returned series always has one entry per day in the range, in

@@ -318,6 +318,80 @@ test('the edit form offers a copyable javascript snippet', function () {
 
 /*
 |--------------------------------------------------------------------------
+| The embed code is labelled
+|--------------------------------------------------------------------------
+|
+| The code blocks are read out loud by a screen reader, so each of them
+| must carry the name of the heading that sits above it. Without it the
+| reader announces an unnamed box of text.
+|
+*/
+
+test('the iframe code box is named by its heading', function () {
+    $widget = Widget::factory()->for($this->space)->create();
+
+    $html = $this->actingAs($this->owner)
+        ->get(route('widgets.edit', ['widget' => $widget]))
+        ->getContent();
+
+    expect($html)->toContain('id="widget-iframe-code-heading"')
+        ->and($html)->toContain('aria-labelledby="widget-iframe-code-heading"');
+});
+
+test('the javascript code box is named by its heading', function () {
+    $widget = Widget::factory()->for($this->space)->create();
+
+    $html = $this->actingAs($this->owner)
+        ->get(route('widgets.edit', ['widget' => $widget]))
+        ->getContent();
+
+    expect($html)->toContain('id="widget-script-code-heading"')
+        ->and($html)->toContain('aria-labelledby="widget-script-code-heading"');
+});
+
+test('the code boxes point at headings that are actually on the page', function () {
+    $widget = Widget::factory()->for($this->space)->create();
+
+    $html = $this->actingAs($this->owner)
+        ->get(route('widgets.edit', ['widget' => $widget]))
+        ->getContent();
+
+    preg_match('/aria-labelledby="widget-iframe-code-heading"/', $html, $iframe);
+    preg_match('/aria-labelledby="widget-script-code-heading"/', $html, $script);
+
+    expect($iframe)->not->toBeEmpty()
+        ->and($script)->not->toBeEmpty()
+        ->and($html)->toContain('id="widget-iframe-code-heading"')
+        ->and($html)->toContain('id="widget-script-code-heading"');
+});
+
+/*
+|--------------------------------------------------------------------------
+| The copy button keeps its own label
+|--------------------------------------------------------------------------
+|
+| After a successful copy the button says "Copied" for a moment and then
+| goes back to what it said before. It must not fall back to a generic
+| word, because the two buttons carry different labels.
+|
+*/
+
+test('the copy button restores the label it had before copying', function () {
+    $widget = Widget::factory()->for($this->space)->create();
+
+    $html = $this->actingAs($this->owner)
+        ->get(route('widgets.edit', ['widget' => $widget]))
+        ->getContent();
+
+    // The label of the button is read before it is replaced, and the same
+    // text is put back afterwards.
+    expect($html)->toContain('const original = button.textContent;')
+        ->and($html)->toContain('button.textContent = original;')
+        ->and($html)->not->toContain("button.dataset.copyLabel || 'Copy'");
+});
+
+/*
+|--------------------------------------------------------------------------
 | The preview
 |--------------------------------------------------------------------------
 */

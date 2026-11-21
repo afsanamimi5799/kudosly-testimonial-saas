@@ -35,7 +35,7 @@
         </div>
     @else
         <div class="mt-6 overflow-x-auto">
-            <svg viewBox="0 0 {{ \App\Dashboard\SubmissionChart::WIDTH }} {{ \App\Dashboard\SubmissionChart::HEIGHT + 30 }}"
+            <svg viewBox="-{{ \App\Dashboard\SubmissionChart::LABEL_PADDING }} 0 {{ \App\Dashboard\SubmissionChart::WIDTH + (\App\Dashboard\SubmissionChart::LABEL_PADDING * 2) }} {{ \App\Dashboard\SubmissionChart::HEIGHT + 30 }}"
                 class="h-48 w-full min-w-[36rem]"
                 role="img"
                 aria-label="Daily testimonial submissions for the last {{ $chart['range'] }} days"

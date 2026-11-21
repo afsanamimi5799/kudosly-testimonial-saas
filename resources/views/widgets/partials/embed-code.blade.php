@@ -5,12 +5,12 @@
 
 <div class="space-y-4">
     <div>
-        <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">iframe embed</h3>
+        <h3 id="widget-iframe-code-heading" class="text-sm font-semibold text-slate-900 dark:text-slate-100">iframe embed</h3>
         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Paste this into any page. It works on every website and every device.
         </p>
 
-        <textarea readonly id="widget-iframe-code" rows="3" readonly
+        <textarea readonly id="widget-iframe-code" rows="3" readonly aria-labelledby="widget-iframe-code-heading"
             class="mt-2 block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">{{ $iframeSnippet }}</textarea>
 
         <button type="button" data-copy-target="widget-iframe-code"
@@ -20,12 +20,12 @@
     </div>
 
     <div>
-        <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">JavaScript embed</h3>
+        <h3 id="widget-script-code-heading" class="text-sm font-semibold text-slate-900 dark:text-slate-100">JavaScript embed</h3>
         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
             This loader inserts the widget into the placeholder. It never changes the styles of your page.
         </p>
 
-        <textarea readonly id="widget-script-code" rows="4" readonly
+        <textarea readonly id="widget-script-code" rows="4" readonly aria-labelledby="widget-script-code-heading"
             class="mt-2 block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">{{ $scriptSnippet }}</textarea>
 
         <button type="button" data-copy-target="widget-script-code"
@@ -56,9 +56,11 @@
 
                 try {
                     navigator.clipboard.writeText(target.value).then(function () {
+                        const original = button.textContent;
+
                         button.textContent = 'Copied';
                         setTimeout(function () {
-                            button.textContent = button.dataset.copyLabel || 'Copy';
+                            button.textContent = original;
                         }, 1500);
                     });
                 } catch (error) {
