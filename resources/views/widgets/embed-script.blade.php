@@ -12,6 +12,30 @@
     var PLACEHOLDER_SELECTOR = '[data-kudosly-widget]';
 
     /**
+     * The origin the loader itself is served from.
+     *
+     * The script is marked as async, so by the time it looks for the
+     * placeholders on the page, `document.currentScript` is already null.
+     * The origin therefore has to be read while the script is still
+     * running, which is what this does.
+     *
+     * The loader is always served from the Kudosly origin, and the widget
+     * has to be fetched from there as well. A host website may live on
+     * any origin in the world, so the widget may never be looked for
+     * under a relative path, because that would send the request to the
+     * host website instead of to Kudosly.
+     */
+    var LOADER_ORIGIN = (function () {
+        var script = document.currentScript;
+
+        try {
+            return script && script.src ? new URL(script.src).origin : null;
+        } catch (error) {
+            return null;
+        }
+    })();
+
+    /**
      * The smallest and the tallest height an iframe is allowed to take.
      * A height outside this range is not applied, so a stray or hostile
      * message cannot collapse the widget or blow it out of the page.
@@ -26,8 +50,9 @@
             return null;
         }
 
-        var script = document.currentScript;
-        var base = script && script.src ? script.src : window.location.href;
+        var base = LOADER_ORIGIN
+            ? LOADER_ORIGIN + '/widgets/embed.js'
+            : window.location.href;
 
         try {
             var url = new URL(base, window.location.href);
@@ -60,7 +85,7 @@
     function build(widgetId, placeholder) {
         var iframe = document.createElement('iframe');
 
-        iframe.setAttribute('src', '/embed/' + encodeURIComponent(widgetId));
+        iframe.setAttribute('src', embedUrlFor(placeholder));
         iframe.setAttribute('title', 'Customer Testimonials');
         iframe.setAttribute('loading', 'lazy');
         iframe.setAttribute('allowtransparency', 'true');

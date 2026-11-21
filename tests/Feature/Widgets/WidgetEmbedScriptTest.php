@@ -175,3 +175,83 @@ test('the widget stylesheet is scoped to the widget', function () {
     expect($html)->toContain('.kudosly-widget')
         ->and($html)->not->toMatch('/<style>\s*body\s*\{/');
 });
+
+/*
+|--------------------------------------------------------------------------
+| The loader finds the widget on a third party website
+|--------------------------------------------------------------------------
+|
+| The loader is placed on a website that the customer does not control,
+| so it can never look for the widget under a relative path. A relative
+| path would send the request to the host website, which answers with
+| its own pages and never with the widget. The iframe therefore has to
+| carry the full address of the widget on the Kudosly origin.
+|
+*/
+
+test('the loader never looks for the widget under a relative path', function () {
+    $script = $this->get(route('widgets.embed.script'))->getContent();
+
+    // A relative path would be resolved against the host website.
+    expect($script)->not->toContain("iframe.setAttribute('src', '/embed/'")
+        ->and($script)->toContain("iframe.setAttribute('src', embedUrlFor(placeholder));");
+});
+
+test('the loader reads its own origin while the script is running', function () {
+    $script = $this->get(route('widgets.embed.script'))->getContent();
+
+    // The script is async, so document.currentScript is gone by the time
+    // the placeholders are looked for. The origin has to be captured
+    // while the script is still running.
+    expect($script)->toContain('var LOADER_ORIGIN = (function ()')
+        ->and($script)->toContain('document.currentScript')
+        ->and($script)->toContain('new URL(script.src).origin');
+});
+
+test('the loader builds the widget address from the origin of the loader', function () {
+    $script = $this->get(route('widgets.embed.script'))->getContent();
+
+    expect($script)->toContain('LOADER_ORIGIN + \'/widgets/embed.js\'')
+        ->and($script)->toContain("url.pathname.replace(/\\/widgets\\/embed\\.js$/, '/embed/'");
+});
+
+test('the loader falls back to the page it runs on', function () {
+    $script = $this->get(route('widgets.embed.script'))->getContent();
+
+    // Without a script address there is nothing better to go by than the
+    // address of the page itself.
+    expect($script)->toContain('window.location.href');
+});
+
+/*
+|--------------------------------------------------------------------------
+| The widget measures its own content
+|--------------------------------------------------------------------------
+|
+| The document element is sized by the iframe, not by the content, so
+| measuring it would report the height of the iframe and the frame could
+| never become smaller. The body is sized by the content, so measuring
+| the body gives the height that has to be applied and lets the frame
+| both grow and shrink.
+|
+*/
+
+test('the widget measures the height of its content', function () {
+    $widget = Widget::factory()->create();
+
+    $html = $this->get(route('widgets.embed.show', ['widget' => $widget->public_id]))->getContent();
+
+    expect($html)->toContain('document.body.scrollHeight')
+        ->and($html)->not->toContain('document.documentElement.scrollHeight');
+});
+
+test('the widget watches its content for changes', function () {
+    $widget = Widget::factory()->create();
+
+    $html = $this->get(route('widgets.embed.show', ['widget' => $widget->public_id]))->getContent();
+
+    // Watching the document element would never notice that the content
+    // changed, because the document element is sized by the iframe.
+    expect($html)->toContain('new ResizeObserver(report).observe(document.body)')
+        ->and($html)->not->toContain('observe(document.documentElement)');
+});

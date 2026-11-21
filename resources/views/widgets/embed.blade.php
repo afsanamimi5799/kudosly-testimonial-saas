@@ -17,7 +17,7 @@
                 var widgetId = @json($widget->public_id);
 
                 function report() {
-                    var height = document.documentElement.scrollHeight;
+                    var height = document.body.scrollHeight;
 
                     if (window.parent === window) {
                         return;
@@ -31,7 +31,7 @@
                 }
 
                 if (window.ResizeObserver) {
-                    new ResizeObserver(report).observe(document.documentElement);
+                    new ResizeObserver(report).observe(document.body);
                 } else {
                     window.addEventListener('load', report);
                 }
