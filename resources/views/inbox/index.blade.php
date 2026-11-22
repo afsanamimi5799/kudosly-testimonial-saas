@@ -42,12 +42,26 @@
             <x-app.empty-state
                 title="No testimonials match these filters"
                 description="Try clearing the filters to see every testimonial sent to your spaces."
-            />
+            >
+                <x-slot:icon>
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M8 10.5h8M8 14h5" />
+                        <path d="M20.5 11.5a7.5 7.5 0 0 1-7.5 7.5c-1.2 0-2.35-.28-3.38-.78L4 20l1.78-5.62A7.5 7.5 0 0 1 13 4a7.5 7.5 0 0 1 7.5 7.5Z" />
+                    </svg>
+                </x-slot:icon>
+            </x-app.empty-state>
         @else
             <x-app.empty-state
                 title="No testimonials yet"
                 description="Once you share a collection link, the testimonials sent to your spaces appear here for review."
-            />
+            >
+                <x-slot:icon>
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M8 10.5h8M8 14h5" />
+                        <path d="M20.5 11.5a7.5 7.5 0 0 1-7.5 7.5c-1.2 0-2.35-.28-3.38-.78L4 20l1.78-5.62A7.5 7.5 0 0 1 13 4a7.5 7.5 0 0 1 7.5 7.5Z" />
+                    </svg>
+                </x-slot:icon>
+            </x-app.empty-state>
         @endif
     @else
         <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">

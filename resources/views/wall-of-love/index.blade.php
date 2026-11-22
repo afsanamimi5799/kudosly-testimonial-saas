@@ -15,7 +15,13 @@
         <x-app.empty-state
             title="Nothing on the wall yet"
             description="Mark a testimonial with a heart from your inbox and it appears here."
-        />
+        >
+            <x-slot:icon>
+                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="m12 20.5S4 15.8 4 10.2A4.2 4.2 0 0 1 12 8a4.2 4.2 0 0 1 8 2.2c0 5.6-8 10.3-8 10.3Z" />
+                </svg>
+            </x-slot:icon>
+        </x-app.empty-state>
     @else
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($testimonials as $testimonial)

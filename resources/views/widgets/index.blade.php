@@ -45,7 +45,16 @@
         <x-app.empty-state
             title="No widgets yet"
             description="Widgets embed your testimonials on your own website. Create a widget to get your embed code."
-        />
+        >
+            <x-slot:icon>
+                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                    <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                    <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                    <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                </svg>
+            </x-slot:icon>
+        </x-app.empty-state>
     @else
         <div class="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <ul class="divide-y divide-slate-200 dark:divide-slate-800">

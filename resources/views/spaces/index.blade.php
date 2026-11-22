@@ -46,7 +46,15 @@
         <x-app.empty-state
             title="No spaces yet"
             description="Spaces let you collect testimonials on a dedicated page. Create your first space to start collecting."
-        />
+        >
+            <x-slot:icon>
+                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 3 3 7.5l9 4.5 9-4.5L12 3Z" />
+                    <path d="m3 12 9 4.5L21 12" />
+                    <path d="m3 16.5 9 4.5 9-4.5" />
+                </svg>
+            </x-slot:icon>
+        </x-app.empty-state>
     @else
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($spaces as $space)
