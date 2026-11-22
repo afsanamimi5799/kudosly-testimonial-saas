@@ -3,8 +3,8 @@
 @section('content')
     <div class="mx-auto max-w-2xl space-y-8">
         <div>
-            <h1 class="text-2xl font-semibold tracking-tight">Profile</h1>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Update your account details and password.</p>
+            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Profile</h1>
+            <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">Update your account details and password.</p>
         </div>
 
         @if (session('status') === 'profile-updated')

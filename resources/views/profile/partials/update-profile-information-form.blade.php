@@ -1,6 +1,6 @@
-<section class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-    <h2 class="text-lg font-semibold tracking-tight">Profile information</h2>
-    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+<section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <h2 class="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">Profile information</h2>
+    <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
         Update your account's name and email address.
     </p>
 
@@ -32,7 +32,7 @@
 
         <div class="flex items-center gap-3">
             <button type="submit"
-                class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900">
+                class="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                 Save
             </button>
         </div>

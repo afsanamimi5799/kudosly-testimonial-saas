@@ -1,7 +1,7 @@
 <div class="space-y-8">
     <div>
-        <h2 class="text-2xl font-semibold tracking-tight">Billing</h2>
-        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+        <h2 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Billing</h2>
+        <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
             Your plan and what it includes.
         </p>
     </div>
@@ -18,11 +18,11 @@
         </div>
     @endif
 
-    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
-                <h3 class="text-lg font-semibold tracking-tight">Plan and usage</h3>
-                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                <h3 class="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">Plan and usage</h3>
+                <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
                     You are on the {{ $currentPlan->name }} plan.
                 </p>
             </div>
@@ -54,8 +54,8 @@
         </p>
     </div>
 
-    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <h3 class="text-lg font-semibold tracking-tight">Subscription</h3>
+    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <h3 class="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">Subscription</h3>
 
         <p class="mt-3 flex items-center gap-2 text-sm">
             <span class="font-medium text-slate-900 dark:text-slate-100">{{ $statusLabel }}</span>
@@ -84,7 +84,7 @@
         @if ($canManageSubscription)
             <form method="POST" action="{{ route('billing.portal') }}" class="mt-4">
                 @csrf
-                <button type="submit" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                <button type="submit" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                     Manage subscription
                 </button>
             </form>
@@ -95,11 +95,11 @@
         @endif
     </div>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         @foreach ($plans as $plan)
             @php $isCurrent = $plan->slug === $currentPlan->slug; @endphp
 
-            <div class="rounded-xl border p-6 shadow-sm {{ $isCurrent ? 'border-indigo-200 bg-indigo-50/50 dark:border-indigo-900 dark:bg-indigo-950/30' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900' }}">
+            <div class="rounded-2xl border p-6 shadow-sm {{ $isCurrent ? 'border-indigo-200 bg-indigo-50/50 dark:border-indigo-900 dark:bg-indigo-950/30' : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900' }}">
                 <div class="flex items-center justify-between gap-3">
                     <h3 class="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">{{ $plan->name }}</h3>
 
@@ -108,7 +108,7 @@
                     @endif
                 </div>
 
-                <p class="mt-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+                <p class="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-slate-900 dark:text-slate-100">
                     @if ($plan->priceInDollars() > 0)
                         {{ $plan->yearlyPriceLabel() }}/year
                     @else
@@ -131,7 +131,7 @@
                     @if ($canUpgrade)
                         <form method="POST" action="{{ route('billing.checkout') }}" class="mt-5">
                             @csrf
-                            <button type="submit" class="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">
+                            <button type="submit" class="w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                                 Upgrade to Pro
                             </button>
                         </form>
