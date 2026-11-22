@@ -27,14 +27,24 @@
     </div>
 
     @if ($maxCount === 0)
-        <div class="mt-6 rounded-xl border border-dashed border-slate-300 px-6 py-12 text-center dark:border-slate-700">
-            <p class="text-sm font-medium text-slate-900 dark:text-slate-100">No submissions in this period</p>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+        <div class="mt-5 flex flex-col items-center rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-6 text-center dark:border-slate-700 dark:bg-slate-800/30">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white text-indigo-500 shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 19V9" />
+                    <path d="M10 19V5" />
+                    <path d="M16 19v-7" />
+                    <path d="M22 19H2" />
+                </svg>
+            </span>
+
+            <p class="mt-3.5 text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">No submissions in this period</p>
+
+            <p class="mt-1 max-w-md text-sm text-slate-600 dark:text-slate-400">
                 Once customers start sending testimonials, the daily totals appear here.
             </p>
         </div>
     @else
-        <div class="mt-6 overflow-x-auto">
+        <div class="mt-5 overflow-x-auto">
             <svg viewBox="-{{ \App\Dashboard\SubmissionChart::LABEL_PADDING }} 0 {{ \App\Dashboard\SubmissionChart::WIDTH + (\App\Dashboard\SubmissionChart::LABEL_PADDING * 2) }} {{ \App\Dashboard\SubmissionChart::HEIGHT + 30 }}"
                 class="h-48 w-full min-w-[36rem]"
                 role="img"
