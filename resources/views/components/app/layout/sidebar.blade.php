@@ -1,5 +1,8 @@
 @props([
     'current' => 'dashboard',
+    'accountName' => null,
+    'accountInitial' => 'U',
+    'accountPhotoUrl' => null,
 ])
 
 <nav class="flex h-full flex-col gap-6 p-4" aria-label="Main">
@@ -81,17 +84,151 @@
     </div>
 
     <div class="border-t border-slate-200 pt-4 dark:border-slate-800">
-        <div class="flex items-center gap-3 rounded-xl px-2 py-1.5">
-            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
-                {{ Str::upper(Str::substr(auth()->user()?->name ?? 'U', 0, 1)) }}
-            </span>
+        <div class="relative" id="sidebar-account-menu">
+            <button type="button"
+                id="sidebar-account-trigger"
+                aria-expanded="false"
+                aria-controls="sidebar-account-dropdown"
+                class="flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:hover:bg-slate-800">
+                <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                    @if ($accountPhotoUrl)
+                        <img src="{{ $accountPhotoUrl }}" alt="" class="h-full w-full object-cover">
+                    @else
+                        {{ $accountInitial }}
+                    @endif
+                </span>
 
-            <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
-                    {{ auth()->user()?->name }}
-                </p>
-                <p class="truncate text-xs text-slate-500 dark:text-slate-400">Signed in</p>
+                <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {{ $accountName }}
+                    </span>
+                    <span class="block truncate text-xs text-slate-500 dark:text-slate-400">Signed in</span>
+                </span>
+
+                <svg class="h-4 w-4 shrink-0 text-slate-400 transition-transform dark:text-slate-500" id="sidebar-account-chevron"
+                    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                </svg>
+            </button>
+
+            <div id="sidebar-account-dropdown"
+                class="absolute bottom-full left-0 z-50 mb-2 hidden w-full min-w-[12rem] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+                aria-labelledby="sidebar-account-trigger">
+                <a href="{{ route('profile.edit') }}"
+                    id="sidebar-account-profile"
+                    class="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100 focus:bg-slate-100 focus:outline-none dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:bg-slate-800">
+                    <svg class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M16 19.5a4 4 0 0 0-8 0" />
+                        <circle cx="12" cy="7.5" r="4" />
+                    </svg>
+                    My Profile
+                </a>
+
+                <form method="POST" action="{{ route('switch-account') }}">
+                    @csrf
+                    <button type="submit"
+                        class="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100 focus:bg-slate-100 focus:outline-none dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:bg-slate-800">
+                        <svg class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M7.5 8.25h9m-9 3H12m-9.75 1.51V6.63c0-1.08.73-2.01 1.75-2.29a48.6 48.6 0 0 1 11.5 0c1.02.28 1.75 1.21 1.75 2.29v6.06c0 .55-.23 1.07-.62 1.44l-3.13 3.13a2 2 0 0 1-2.83 0l-1.6-1.6" />
+                            <path d="M3.75 15v2.25A2.25 2.25 0 0 0 6 19.5h2.25" />
+                        </svg>
+                        Switch Account
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit"
+                        class="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100 focus:bg-slate-100 focus:outline-none dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:bg-slate-800">
+                        <svg class="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M15 17l5-5-5-5" />
+                            <path d="M20 12H9" />
+                            <path d="M12 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6" />
+                        </svg>
+                        Log out
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 </nav>
+
+<script>
+    (function () {
+        var root = document.getElementById('sidebar-account-menu');
+
+        if (! root) {
+            return;
+        }
+
+        var trigger = document.getElementById('sidebar-account-trigger');
+        var dropdown = document.getElementById('sidebar-account-dropdown');
+        var chevron = document.getElementById('sidebar-account-chevron');
+
+        var isOpen = false;
+
+        function open() {
+            isOpen = true;
+
+            dropdown.classList.remove('hidden');
+            trigger.setAttribute('aria-expanded', 'true');
+            chevron.classList.add('rotate-180');
+        }
+
+        function close(returnFocus) {
+            if (! isOpen) {
+                return;
+            }
+
+            isOpen = false;
+
+            dropdown.classList.add('hidden');
+            trigger.setAttribute('aria-expanded', 'false');
+            chevron.classList.remove('rotate-180');
+
+            if (returnFocus) {
+                trigger.focus();
+            }
+        }
+
+        trigger.addEventListener('click', function () {
+            if (isOpen) {
+                close(false);
+            } else {
+                open();
+            }
+        });
+
+        // Escape closes the menu and puts the focus back on the button that
+        // opened it, so the keyboard never loses its place.
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && isOpen) {
+                close(true);
+            }
+        });
+
+        // A click anywhere outside the account section closes the menu.
+        document.addEventListener('click', function (event) {
+            if (! isOpen) {
+                return;
+            }
+
+            if (! root.contains(event.target)) {
+                close(false);
+            }
+        });
+
+        // Focus that leaves the account section altogether also closes the
+        // menu, so that a keyboard user tabbing onwards is not left with an
+        // open menu behind them.
+        root.addEventListener('focusout', function (event) {
+            if (! isOpen) {
+                return;
+            }
+
+            if (! root.contains(event.relatedTarget)) {
+                close(false);
+            }
+        });
+    })();
+</script>

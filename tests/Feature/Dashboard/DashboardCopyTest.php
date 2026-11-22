@@ -38,12 +38,30 @@ it('no longer says that collection arrives later', function () {
         ->assertDontSee('Collection arrives in a later release');
 });
 
-it('offers a way to create the first space', function () {
+it('offers a way to create the first space in the header', function () {
     $this->actingAs($this->user)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Create your first space')
+        ->assertSee('Create New Space')
         ->assertSee(route('spaces.create'));
+});
+
+it('does not offer a second way to create the first space in the empty state', function () {
+    // The button in the empty state was the same link as the one in the
+    // header, so it was removed. The rest of the empty state is kept.
+    $this->actingAs($this->user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertDontSee('Create your first space');
+});
+
+it('keeps the rest of the empty state of the spaces section', function () {
+    $this->actingAs($this->user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('No spaces yet')
+        ->assertSee('Spaces let you collect testimonials on a dedicated page.')
+        ->assertSee('Create a space to get a link you can share with your customers.');
 });
 
 it('links the plan card to the billing page', function () {

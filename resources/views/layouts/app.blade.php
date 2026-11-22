@@ -19,8 +19,13 @@
             <label for="app-sidebar-toggle" aria-hidden="true"
                 class="fixed inset-0 z-30 hidden cursor-pointer bg-slate-900/50 peer-checked:block lg:hidden"></label>
 
-            <aside class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full border-r border-slate-200 bg-white transition-transform peer-checked:translate-x-0 lg:static lg:translate-x-0 dark:border-slate-800 dark:bg-slate-900">
-                <x-app.layout.sidebar :current="$current ?? 'dashboard'" />
+            <aside class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full border-r border-slate-200 bg-white transition-transform peer-checked:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:overflow-y-auto dark:border-slate-800 dark:bg-slate-900">
+                <x-app.layout.sidebar
+    :current="$current ?? 'dashboard'"
+    :account-name="$accountName ?? null"
+    :account-initial="$accountInitial ?? 'U'"
+    :account-photo-url="$accountPhotoUrl ?? null"
+/>
             </aside>
 
             <div class="flex min-w-0 flex-1 flex-col">

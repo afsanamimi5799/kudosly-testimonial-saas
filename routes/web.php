@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\SwitchAccountController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InboxController;
@@ -240,6 +241,15 @@ Route::middleware('auth')->group(function () {
     Route::put('password', [ProfileController::class, 'updatePassword'])
         ->name('password.update');
 
+    Route::post('profile/photo', [ProfileController::class, 'updatePhoto'])
+        ->name('profile.photo.update');
+
+    Route::delete('profile/photo', [ProfileController::class, 'destroyPhoto'])
+        ->name('profile.photo.destroy');
+
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+    Route::post('switch-account', SwitchAccountController::class)
+        ->name('switch-account');
 });

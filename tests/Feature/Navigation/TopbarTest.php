@@ -9,11 +9,11 @@ use Database\Seeders\PlanSeeder;
 | The top bar
 |--------------------------------------------------------------------------
 |
-| The top bar sits above every page of the application. On a narrow
-| screen the name of the account and the words "Log out" are hidden so
-| that the bar still fits, which leaves the logout button with nothing
-| but an icon. The button therefore has to carry its own name, or a
-| screen reader announces it as an unnamed button.
+| The top bar sits above every page of the application. It names the
+| account that is signed in. The sign out used to live here as well, but
+| it now belongs to the account menu at the bottom of the sidebar, so
+| the bar holds nothing but the name of the page and the name of the
+| account.
 |
 */
 
@@ -26,34 +26,25 @@ beforeEach(function () {
     $this->user->forceFill(['plan_slug' => PlanType::Free->value])->save();
 });
 
-test('the logout button carries a name of its own', function () {
+test('the top bar no longer holds a logout button', function () {
     $html = $this->actingAs($this->user)->get(route('dashboard'))->getContent();
 
-    expect($html)->toContain('aria-label="Log out"');
-});
-
-test('the logout button is the only control in the top bar without a name', function () {
-    $html = $this->actingAs($this->user)->get(route('dashboard'))->getContent();
-
-    // The top bar holds the logout form. Every control inside it has to
-    // be reachable by name, so the markup is inspected on its own.
+    // The top bar is inspected on its own, so the sign out of the
+    // sidebar menu cannot hide a leftover button here.
     preg_match('/<header.*?<\/header>/s', $html, $matches);
 
-    expect($matches[0] ?? '')->toContain('aria-label="Log out"');
+    $header = $matches[0] ?? '';
+
+    expect($header)->not->toContain('Log out')
+        ->and($header)->not->toContain('aria-label="Log out"')
+        ->and($header)->not->toContain('action="'.route('logout').'"');
 });
 
-test('the logout button still shows the words Log out on a wide screen', function () {
+test('the sign out is still reachable from the sidebar account menu', function () {
     $html = $this->actingAs($this->user)->get(route('dashboard'))->getContent();
 
-    // The visible label is hidden on a narrow screen only, so the words
-    // are still part of the markup.
-    expect($html)->toContain('>Log out</span>');
-});
-
-test('the logout button still posts to the logout route', function () {
-    $html = $this->actingAs($this->user)->get(route('dashboard'))->getContent();
-
-    expect($html)->toContain('action="'.route('logout').'"');
+    expect($html)->toContain('action="'.route('logout').'"', false)
+        ->and($html)->toContain('Log out');
 });
 
 test('the top bar names the current page', function () {

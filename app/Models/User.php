@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Cashier\Billable;
 
 #[Fillable(['name', 'email', 'password'])]
@@ -22,6 +23,16 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use Billable, HasFactory, Notifiable;
+
+    /**
+     * The directory on the public disk that holds the profile pictures of
+     * the account holders.
+     *
+     * The pictures of the people who send in testimonials live in their own
+     * directory. Keeping the two apart means that removing one set can
+     * never affect the other.
+     */
+    public const PROFILE_PHOTO_DIRECTORY = 'user-profile-photos';
 
     /**
      * Get the attributes that should be cast.
@@ -177,5 +188,31 @@ class User extends Authenticatable
     public function hasSpaceQuota(): bool
     {
         return $this->spaceQuotaRemaining() > 0;
+    }
+
+    /**
+     * The address of the profile picture, when the account has one.
+     *
+     * The picture is stored on the public disk, so it is served through the
+     * address of that disk. An account without a picture has no address,
+     * and the caller shows the initial of the name instead.
+     */
+    public function profilePhotoUrl(): ?string
+    {
+        $path = $this->profile_photo_path;
+
+        if (! is_string($path) || $path === '') {
+            return null;
+        }
+
+        return Storage::disk('public')->url($path);
+    }
+
+    /**
+     * The letter that stands in for the picture when there is none.
+     */
+    public function profileInitial(): string
+    {
+        return strtoupper(mb_substr($this->name ?? 'U', 0, 1));
     }
 }

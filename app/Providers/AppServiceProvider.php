@@ -107,9 +107,14 @@ class AppServiceProvider extends ServiceProvider
 
             $active = $navigation[$routeName] ?? ['key' => 'dashboard', 'title' => 'Dashboard'];
 
+            $user = request()->user();
+
             $view->with([
                 'current' => $active['key'],
                 'title' => $active['title'],
+                'accountName' => $user?->name,
+                'accountInitial' => $user?->profileInitial() ?? 'U',
+                'accountPhotoUrl' => $user?->profilePhotoUrl(),
             ]);
         });
     }

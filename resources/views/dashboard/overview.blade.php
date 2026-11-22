@@ -189,11 +189,6 @@
                     <p class="relative mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                         Spaces let you collect testimonials on a dedicated page. Create a space to get a link you can share with your customers.
                     </p>
-
-                    <a href="{{ route('spaces.create') }}"
-                        class="relative mt-5 inline-flex items-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-500">
-                        Create your first space
-                    </a>
                 </div>
             @else
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" id="dashboard-space-list">
