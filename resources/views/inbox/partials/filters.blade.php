@@ -3,10 +3,10 @@
 <form method="GET" action="{{ route('inbox.index') }}"
     class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <div class="sm:col-span-2 lg:col-span-2">
+        <div class="relative sm:col-span-2 lg:col-span-2">
             <label for="inbox-search" class="sr-only">Search testimonials</label>
 
-            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 sm:hidden">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="11" cy="11" r="7" />
                     <path d="m20 20-3.5-3.5" />
@@ -15,7 +15,7 @@
 
             <input id="inbox-search" type="search" name="search" value="{{ $filters->search }}"
                 placeholder="Search name, company or text..."
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500">
+                class="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500">
         </div>
 
         <div>

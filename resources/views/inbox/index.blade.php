@@ -1,7 +1,7 @@
 <div class="space-y-8">
     <div>
-        <h2 class="text-2xl font-semibold tracking-tight">Inbox</h2>
-        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+        <h2 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Inbox</h2>
+        <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
             Review, approve and organise the testimonials sent to your spaces.
         </p>
     </div>
@@ -29,7 +29,7 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <x-app.stat-card label="Total Testimonials" :value="$totalCount" />
         <x-app.stat-card label="Pending" :value="$pendingCount" />
         <x-app.stat-card label="Approved" :value="$approvedCount" />

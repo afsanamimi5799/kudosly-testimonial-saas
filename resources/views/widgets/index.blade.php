@@ -1,14 +1,14 @@
 <div class="space-y-8">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-            <h2 class="text-2xl font-semibold tracking-tight">Widgets</h2>
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            <h2 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Widgets</h2>
+            <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
                 The embeddable widgets that display your testimonials on your own site.
             </p>
         </div>
 
         <a href="{{ route('widgets.create') }}"
-            class="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500">
+            class="inline-flex items-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
             Create widget
         </a>
     </div>
@@ -37,7 +37,7 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <x-app.stat-card label="Total Widgets" :value="$widgetsCount" />
     </div>
 

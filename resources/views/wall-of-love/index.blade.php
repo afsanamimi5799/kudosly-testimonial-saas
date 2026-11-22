@@ -1,12 +1,12 @@
 <div class="space-y-8">
     <div>
-        <h2 class="text-2xl font-semibold tracking-tight">Wall of Love</h2>
-        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+        <h2 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Wall of Love</h2>
+        <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
             The testimonials you have marked with a heart. Each space has its own public wall.
         </p>
     </div>
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <x-app.stat-card label="On The Wall" :value="$wallOfLoveCount" />
         <x-app.stat-card label="Visible Publicly" :value="$publicCount" />
     </div>
