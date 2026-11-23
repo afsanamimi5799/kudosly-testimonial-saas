@@ -64,10 +64,14 @@
             </x-app.empty-state>
         @endif
     @else
-        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        {{-- The list is not clipped, so that the action menu of a testimonial
+             can open past the edge of the card and past the edge of the list.
+             The rounded corners are kept by rounding the first and the last
+             card instead of rounding the list itself. --}}
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <ul class="divide-y divide-slate-200 dark:divide-slate-800">
                 @foreach ($testimonials as $testimonial)
-                    <li>
+                    <li class="first:rounded-t-xl last:rounded-b-xl">
                         @include('inbox.partials.item', ['testimonial' => $testimonial])
                     </li>
                 @endforeach
@@ -112,3 +116,91 @@
         </div>
     @endif
 </div>
+
+<script>
+    (function () {
+        var menus = Array.prototype.slice.call(
+            document.querySelectorAll('[data-inbox-actions]')
+        );
+
+        if (menus.length === 0) {
+            return;
+        }
+
+        // A menu opens below its button, but there is not always room for it
+        // there. When the button sits close to the bottom of the window, the
+        // menu is turned around and opens above the button instead, so that
+        // every action stays visible and can be clicked.
+        function place(details) {
+            var menu = details.querySelector('[data-inbox-actions-menu]');
+
+            if (! menu) {
+                return;
+            }
+
+            // Measure the menu without its offset so that the space it needs
+            // is known before it is placed.
+            menu.classList.remove('bottom-full', 'mb-1', 'mt-1');
+            menu.style.bottom = '';
+            menu.style.marginTop = '';
+            menu.style.left = '';
+            menu.style.right = '';
+
+            var button = details.getBoundingClientRect();
+            var spaceBelow = window.innerHeight - button.bottom;
+            var menuHeight = menu.offsetHeight;
+            var fitsBelow = spaceBelow >= menuHeight + 8;
+
+            if (! fitsBelow && button.top >= menuHeight + 8) {
+                // There is more room above the button than below it, so the
+                // menu opens upwards.
+                menu.classList.add('bottom-full', 'mb-1');
+            } else {
+                menu.classList.add('mt-1');
+            }
+
+            // On a narrow screen the menu is wider than the space to the left
+            // of the button, so it is moved across until it sits inside the
+            // window and no longer runs off the edge.
+            //
+            // The menu is positioned against the button, so the place is
+            // worked out relative to the button and not to the window.
+            var menuWidth = menu.offsetWidth;
+            var offsetLeft = button.left - details.getBoundingClientRect().left;
+            var left = offsetLeft + button.width - menuWidth;
+
+            if (left < 8) {
+                left = 8;
+            }
+
+            var maxLeft = window.innerWidth - menuWidth - 8;
+
+            if (left > maxLeft) {
+                left = maxLeft;
+            }
+
+            if (left < 0) {
+                left = 0;
+            }
+
+            menu.style.left = Math.round(left) + 'px';
+            menu.style.right = 'auto';
+        }
+
+        menus.forEach(function (details) {
+            details.addEventListener('toggle', function () {
+                if (details.open) {
+                    place(details);
+                }
+            });
+        });
+
+        window.addEventListener('resize', function () {
+            menus.forEach(function (details) {
+                if (details.open) {
+                    place(details);
+                }
+            });
+        });
+    })();
+</script>

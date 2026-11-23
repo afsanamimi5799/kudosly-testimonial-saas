@@ -131,7 +131,7 @@
         </form>
 
         {{-- Secondary actions live behind an ellipsis menu. --}}
-        <details class="relative">
+        <details class="relative" data-inbox-actions>
             <summary class="inline-flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
                 <span class="sr-only">More actions for {{ $testimonial->customer_name }}</span>
                 <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -139,7 +139,8 @@
                 </svg>
             </summary>
 
-            <div class="absolute right-0 z-10 mt-1 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+            <div class="absolute right-0 z-10 mt-1 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+                data-inbox-actions-menu>
                 <a href="{{ route('testimonials.edit', ['testimonial' => $testimonial]) }}"
                     class="block px-4 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
                     Edit testimonial
