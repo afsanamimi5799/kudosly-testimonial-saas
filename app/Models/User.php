@@ -8,6 +8,7 @@ use App\Billing\PlanType;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,6 +46,25 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Store the email address in a canonical form.
+     *
+     * An address is written to the database in lower case and without any
+     * surrounding spaces. Doing it here means every path that writes an
+     * address produces the same result, so a sign in, a password reset and a
+     * profile update all look the account up the same way.
+     *
+     * The addresses that were stored before this rule was added are left
+     * alone, because rewriting them would touch rows that belong to existing
+     * accounts.
+     */
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            set: fn (string $value): string => mb_strtolower(trim($value)),
+        );
     }
 
     /**

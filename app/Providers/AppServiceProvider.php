@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use App\Auth\CaseInsensitiveEmailUserProvider;
 use App\Billing\Contracts\StripeGateway;
 use App\Billing\StripeGateway as StripeGatewayImplementation;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -40,6 +43,19 @@ class AppServiceProvider extends ServiceProvider
         // binding can be swapped for a fake while the billing features are
         // exercised without reaching Stripe.
         $this->app->bind(StripeGateway::class, StripeGatewayImplementation::class);
+
+        // Accounts are looked up by email address, and the comparison has to
+        // give the same answer on every database rather than depending on the
+        // collation of the one in use.
+        //
+        // The creator is registered against the driver name, so it replaces
+        // the provider that config/auth.php asks for. The password broker
+        // asks the auth manager for the same provider, which means the sign
+        // in form and the password reset flow look accounts up in the same
+        // way.
+        Auth::provider('eloquent', function (Application $app, array $config) {
+            return new CaseInsensitiveEmailUserProvider($app['hash'], $config['model']);
+        });
     }
 
     /**

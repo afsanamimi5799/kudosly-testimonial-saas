@@ -46,9 +46,29 @@ class LoginRequest extends FormRequest
     }
 
     /**
+     * Normalise the email address before validation.
+     *
+     * Every other place the application takes an email address lowers and
+     * trims it, and the stored address is always in that canonical form.
+     * The sign in form has to do the same, otherwise an address typed with
+     * capitals or with stray spaces fails to match the stored one.
+     *
+     * Normalising here also means the throttle key and the credentials that
+     * are checked always agree.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->email)) {
+            $this->merge([
+                'email' => mb_strtolower(trim($this->email)),
+            ]);
+        }
+    }
+
+    /**
      * Attempt to authenticate the request's credentials.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function authenticate(): void
     {
@@ -68,7 +88,7 @@ class LoginRequest extends FormRequest
     /**
      * Ensure the login request is not rate limited.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function ensureIsNotRateLimited(): void
     {

@@ -2,6 +2,9 @@
 
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +46,56 @@ test('login fails with an incorrect password', function () {
     ])->assertSessionHasErrors('email');
 
     $this->assertGuest();
+});
+
+test('a user can log in with an email address typed in capitals', function () {
+    $user = User::factory()->create([
+        'email' => 'ada@example.com',
+        'password' => 'password123',
+    ]);
+
+    $this->post(route('login'), [
+        'email' => 'ADA@Example.com',
+        'password' => 'password123',
+    ])->assertRedirect(route('dashboard', absolute: false));
+
+    $this->assertAuthenticatedAs($user);
+});
+
+test('a user can log in with an email address that carries stray spaces', function () {
+    $user = User::factory()->create([
+        'email' => 'ada@example.com',
+        'password' => 'password123',
+    ]);
+
+    $this->post(route('login'), [
+        'email' => '  ada@example.com  ',
+        'password' => 'password123',
+    ])->assertRedirect(route('dashboard', absolute: false));
+
+    $this->assertAuthenticatedAs($user);
+});
+
+test('a user can log in whose stored email address carries capitals', function () {
+    // An address stored before the addresses were normalised.
+    DB::table('users')->insert([
+        'name' => 'Legacy Account',
+        'email' => 'Legacy@Example.com',
+        'email_verified_at' => now(),
+        'password' => Hash::make('password123'),
+        'remember_token' => Str::random(10),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $user = User::where('email', 'Legacy@Example.com')->first();
+
+    $this->post(route('login'), [
+        'email' => 'legacy@example.com',
+        'password' => 'password123',
+    ])->assertRedirect(route('dashboard', absolute: false));
+
+    $this->assertAuthenticatedAs($user);
 });
 
 test('login fails with an unknown email address', function () {
