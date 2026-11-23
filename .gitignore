@@ -45,6 +45,7 @@ Thumbs.db
 /storage/app/private
 /storage/app/*.key
 
-# Local tool state
-/.puku-cli
+# Keep local Puku settings private; track only project skills.
+/.puku-cli/*
+!/.puku-cli/skills/
 
