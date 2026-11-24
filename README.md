@@ -435,6 +435,46 @@ other. Across the whole project, fourteen long-running commands were also starte
 the background (test suites, builds, local servers) while other work continued in the
 foreground.
 
+### The project skill
+
+The second agentic tool used was a **Skill** — a packaged workflow that Puku CLI
+loads and executes as a unit. One was written for this repository:
+[`kudosly-doc-review`](.puku-cli/skills/kudosly-doc-review/SKILL.md). It reviews the
+documentation and the screenshot assets for three classes of defect: broken
+Markdown links, credential or secret exposure, and personal information that should
+not be published. Findings are classified as `blocking`, `disclosure` or `info`.
+
+It was genuinely invoked through the Puku CLI `Skill` tool against `README.md` and
+`docs/`. The invocation is recorded in the session log as a tool-use block with
+`"name":"Skill"` and `"input":{"skill":"kudosly-doc-review","args":"README.md
+docs/"}`, and the loader's reply opens with `Base directory for this skill:`. The
+review resolved every relative link target on disk, scanned the raw bytes of all
+fifteen PNGs, and returned the verdict **`clean with disclosures`** — no broken
+links, no secrets and no e-mail-address leaks, with the account holder's display
+name and the space name correctly identified as disclosures rather than leaks.
+
+### Branch-based work
+
+The final documentation work was carried out on two feature branches in two
+separate Git worktrees, located outside the repository so that nothing under
+`.worktrees/` could ever be staged. Each branch owned exactly one document, so the
+two could not conflict:
+
+| Branch | Worktree | Document |
+| --- | --- | --- |
+| `feature/agentic-workflow-doc` | outside the repository | `docs/agentic-workflow.md` |
+| `feature/reviewer-guide` | outside the repository | `docs/reviewer-guide.md` |
+
+Two agents were dispatched in a single message with `run_in_background: true`, one
+per branch, and they ran **concurrently** — the dispatch timestamps in the session
+log show the first agent starting at `23:25:44.279Z` and the second at
+`23:25:57.627Z`, while the first was still running. Both branches were merged into
+`main` with `--no-ff`, so the history records two genuine merge commits with two
+parents each rather than a linear run of commits.
+
+`docs/agentic-workflow.md` documents this workflow in full, and
+`docs/reviewer-guide.md` is a guide written for the course reviewer.
+
 ### What was **not** used
 
 To keep this section accurate:
@@ -443,15 +483,18 @@ To keep this section accurate:
   `~/.claude` directory and no `.claude/` configuration in this repository. The
   `CLAUDE.md` and `AGENTS.md` files in the root are project documentation for any
   coding agent, including Puku CLI.
-- **No custom skills, hooks or MCP servers** were written or configured for this
-  project.
+- **No hooks and no MCP servers** were written or configured for this project.
+  There is no `.mcp.json` in the repository, and the project entry in
+  `~/.puku-cli/puku-cli.json` carries an empty `mcpServers` object. The browser
+  checks described above were run as Node scripts through Playwright, not
+  through an MCP server.
+- **One custom skill** was written for this project, and it is the only one:
+  [`kudosly-doc-review`](.puku-cli/skills/kudosly-doc-review/SKILL.md), a
+  documentation and privacy review workflow. See
+  [The project skill](#the-project-skill) below.
 - **Laravel Boost is installed** as a development dependency (`laravel/boost`), but
   `php artisan boost:install` was deliberately **not** run, so `CLAUDE.md` and
   `AGENTS.md` contain hand-written project instructions rather than generated ones.
-- **No branch-and-merge workflow took place.** The 21 commits in this repository were
-  made directly on `main`. There are no merge commits and no feature branches, so the
-  history is linear. See
-  [Remaining assignment requirements](#remaining-assignment-requirements).
 
 Every line of application code, test and documentation in this repository was written
 or reviewed with agent assistance, and the full suite — 690 tests — passes against the
@@ -461,15 +504,9 @@ committed state.
 
 ## Remaining assignment requirements
 
-Two items still lack real evidence. Neither is a defect in the application.
+One item still lacks real evidence. It is not a defect in the application.
 
-1. **A clean branch-and-merge.** The assignment expects work to be carried out on a
-   feature branch and merged. The history of this repository is linear: 21 commits,
-   all on `main`, with no merge commits and no other branches. The shortest way to
-   produce a genuine merge artifact is to branch, commit the remaining documentation
-   there, and merge it back with `--no-ff`.
-
-2. **A demo recording.** The screenshots are done: the Dashboard, Spaces, the
+1. **A demo recording.** The screenshots are done: the Dashboard, Spaces, the
    space and widget builders, the Inbox (including the three-dot actions menu
    open), the public collection form, the Wall of Love, the Widgets page, the
    rendered widget preview and Billing are all captured. See
@@ -494,5 +531,7 @@ Two items still lack real evidence. Neither is a defect in the application.
 | [`PRD.md`](PRD.md) | The product requirements the application was built against |
 | [`docs/data-model.md`](docs/data-model.md) | Entities, columns, relationships and an ER diagram |
 | [`docs/deployment.md`](docs/deployment.md) | Production deployment and operations runbook |
+| [`docs/agentic-workflow.md`](docs/agentic-workflow.md) | How the project was built with an AI agent, and the evidence for it |
+| [`docs/reviewer-guide.md`](docs/reviewer-guide.md) | How to install, run and judge the application |
 | [`CLAUDE.md`](CLAUDE.md) | Development instructions for any coding agent |
 | [`AGENTS.md`](AGENTS.md) | The same instructions, for agents that look for that file |
